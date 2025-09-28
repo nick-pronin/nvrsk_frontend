@@ -1,74 +1,48 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
-
-interface FormData {
-  email: string;
-  password: string;
-}
+import { useState } from "react";
+import { registerUser } from "../api/auth";
 
 export default function Register() {
-  const [form, setForm] = useState<FormData>({ email: "", password: "" });
-  const [message, setMessage] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("Отправка запроса...");
-
     try {
-      const res = await fetch(
-        "https://nvrsk-backend-develop.onrender.com/api/auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        setMessage(`✅ Пользователь ${data.email} зарегистрирован!`);
+      const data = await registerUser(email, password);
+      if (data?.id) {
+        setMessage("Регистрация успешна ✅");
+        setEmail("");
+        setPassword("");
       } else {
-        const error = await res.text();
-        setMessage(`❌ Ошибка: ${error}`);
+        setMessage(data?.message || "Ошибка регистрации ❌");
       }
     } catch (err) {
-      if (err instanceof Error) setMessage(`❌ Ошибка подключения: ${err.message}`);
+      setMessage("Ошибка сети ❌");
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "2rem auto", textAlign: "center" }}>
-      <h2>Регистрация</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-          style={{ display: "block", margin: "10px auto", width: "100%" }}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Пароль"
-          value={form.password}
-          onChange={handleChange}
-          required
-          style={{ display: "block", margin: "10px auto", width: "100%" }}
-        />
-        <button
-          type="submit"
-          style={{ marginTop: "10px", padding: "8px 16px", cursor: "pointer" }}
-        >
-          Зарегистрироваться
-        </button>
-      </form>
+    <form onSubmit={handleSubmit}>
+      <h2>Sign Up</h2>
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        style={{ display: "block", marginBottom: "10px", width: "100%" }}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        style={{ display: "block", marginBottom: "10px", width: "100%" }}
+      />
+      <button type="submit" style={{ padding: "10px 20px" }}>Register</button>
       {message && <p>{message}</p>}
-    </div>
+    </form>
   );
 }
